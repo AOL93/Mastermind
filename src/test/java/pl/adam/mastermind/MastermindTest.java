@@ -15,4 +15,15 @@ public class MastermindTest {
 
         assertEquals(4, game.getWinCombination().size());
     }
+
+
+    @Test
+    public void compare() {
+        Mastermind game = new Mastermind();
+        game.drawWinColors();
+
+        assertTrue( game.compare( game.getWinCombination() ) );
+
+        //TODO Add assertion with false
+    }
 }
