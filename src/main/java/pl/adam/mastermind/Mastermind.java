@@ -1,33 +1,23 @@
 package pl.adam.mastermind;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.IntStream;
 
-/**
- * Unnecessary things:
- * - possible rounds to guess combination,
- * - array of possible colors,
- * - array with winning combination,
- * - ...
- *
- */
-
-
 public class Mastermind {
 
-    //TODO Interaction with the user
-    //TODO Compare user guess with winCombination
-    //TODO Sockets
+    //TODO Sockets to play with server
 
     private int rounds;
+    private boolean userWin;
     private ArrayList<String> colors;
     private ArrayList<String> winCombination;
 
-    //TODO Use singleton to init game.
     public Mastermind() {
         rounds = 8;
+        userWin = false;
         colors = new ArrayList<>();
         winCombination = new ArrayList<>();
 
@@ -54,12 +44,30 @@ public class Mastermind {
      * Starting game.
      */
     public void start() {
+        ArrayList<String> userGuess = new ArrayList<>();
+        int attempts = 0;
+
+        System.out.println("Welcome in Mastermind console version(by the way Graphic version as soon as possible).");
+        System.out.println("After draw colors write 4 colors in console(color per line).");
+        System.out.println("Available colors: BLACK, BLUE, GREEN, ORANGE, RED, WHITE, YELLOW");
+        System.out.println("You've got 8 rounds to guess winning combination. GOOD LUCK AND HAVE FUN :)");
         drawWinColors();
 
-        IntStream.range(0, winCombination.size())
-                .forEach( i -> System.out.println(winCombination.get(i)) );
-
         //TODO Save user's combination and compare with winning combination.
+        do {
+            userGuess = askUser();
+            attempts++;
+            compare(userGuess);
+        }while( !userWin && attempts<=rounds );
+
+        if(userWin) {
+            System.out.println("CONGRATULATION!!!\nYOU'RE WINNER!!!");
+        } else {
+            System.out.println("YOU LOSE :(\nMAYBE NEXT TIME");
+            System.out.println("Win combination:");
+            IntStream.range(0, winCombination.size())
+                    .forEach( i -> System.out.println(winCombination.get(i)) );
+        }
     }
 
     /**
@@ -78,35 +86,57 @@ public class Mastermind {
 
     /**
      * Compare winning combination with user's guess combination.
+     * Method looking for correct colors and positions first. If find one change
+     * variable in Array checkArray to null(it's important to not remove element because array lose position
+     * of next colors). After that looking for correct colors only.
      * @param userGuess - Combination of user's colors.
      * @return Boolean value (for tests). True - user win or False - wrong combination
      */
     //FIXME for tests method return boolean
-    public boolean compare(ArrayList userGuess) {
+    public String compare(ArrayList userGuess) {
+
+        ArrayList<String> checkArray = (ArrayList<String>) winCombination.clone();
+        String resultMsg;
 
         int guessPosition = 0;
         int guessColor = 0;
 
-        //Have to compare userGuess and winCombination
-        //if all are correct game end and user win, if not looking for other colors
-
+        //TODO use equalsIgnoreCase
+        //First check correct colors and positions.
         for(int i=0;i<winCombination.size();i++) {
+            if(checkArray.contains(userGuess.get(i))) {
+                if(checkArray.get(i).equals(userGuess.get(i))) {
 
-            if(userGuess.contains(winCombination.get(i))) {
-                if(winCombination.get(i).equals(userGuess.get(i))) {
-                    guessPosition++;
-                } else{
-                    guessColor++;
+                    checkArray.set(i,null); //
+                    //guessPosition++;
                 }
             }
         }
 
+        //Check correct colors but wrong position (without counting the same color twice)
+        for(int i=0;i<winCombination.size();i++) {
+            if(checkArray.contains(userGuess.get(i)) && checkArray.get(i) != null ) {
+
+                checkArray.set(
+                        checkArray.indexOf(userGuess.get(i)),
+                        "poss");
+                //guessColor++;
+            }
+        }
+
+        guessColor = Collections.frequency(checkArray,"poss");
+        guessPosition = Collections.frequency(checkArray,null);
+
         //white - right color, wrong position
         //black - right color, right position
-        System.out.println("WHITE: " + guessColor);
-        System.out.println("BLACK: " + guessPosition);
+        //System.out.println("WHITE: " + guessColor);
+        //System.out.println("BLACK: " + guessPosition);
 
-        return guessPosition == 4;
+        userWin = guessPosition == 4;
+
+        resultMsg = "WHITE: " + guessColor + "\n" + "BLACK: " + guessPosition;
+
+        return resultMsg;
     }
 
     /**
@@ -115,5 +145,22 @@ public class Mastermind {
      */
     public ArrayList<String> getWinCombination() {
         return winCombination;
+    }
+
+    /**
+     * Return true if user win else user still in game
+     * or loose(the limit of rounds has been reached)
+     * @return
+     */
+    public boolean isUserWin() {
+        return userWin;
+    }
+
+    /**
+     * Set winCombination - helps in tests
+     * @param winCombination
+     */
+    public void setWinCombination(ArrayList<String> winCombination) {
+        this.winCombination = winCombination;
     }
 }
